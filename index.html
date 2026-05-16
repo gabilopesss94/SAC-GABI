@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SAC TransformAção - Dashboard</title>
+
+  <style>
+    /* =========================
+       RESET BÁSICO
+    ========================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --success: #16a34a;
+      --shadow: 0 10px 25px rgba(0,0,0,0.08);
+      --radius: 16px;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* =========================
+       HEADER
+    ========================== */
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 28px;
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    header h1 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      opacity: 0.9;
+    }
+
+    .last-update {
+      margin-top: 12px;
+      font-size: 0.95rem;
+    }
+
+    /* =========================
+       ALERTAS
+    ========================== */
+    .alert {
+      padding: 14px 18px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-weight: bold;
+      display: none;
+    }
+
+    .loading {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    /* =========================
+       KPIs
+    ========================== */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--card);
+      padding: 24px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transition: transform 0.2s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .kpi-title {
+      font-size: 0.95rem;
+      color: var(--text-light);
+      margin-bottom: 10px;
+    }
+
+    .kpi-value {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    /* =========================
+       FILTROS
+    ========================== */
+    .filters {
+      background: var(--card);
+      padding: 20px;
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .filter-group label {
+      margin-bottom: 8px;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    .filter-group input,
+    .filter-group select {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+      border-color: var(--primary);
+    }
+
+    /* =========================
+       GRÁFICO
+    ========================== */
+    .chart-container {
+      background: var(--card);
+      padding: 24px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .chart-container h2 {
+      margin-bottom: 20px;
+    }
+
+    canvas {
+      width: 100%;
+      max-height: 400px;
+    }
+
+    /* =========================
+       TABELA
+    ========================== */
+    .table-container {
+      background: var(--card);
+      padding: 24px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .table-container h2 {
+      margin-bottom: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+    }
+
+    thead {
+      background: #eff6ff;
+    }
+
+    th,
+    td {
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    th {
+      color: var(--primary-dark);
+    }
+
+    tr:hover {
+      background: #f8fafc;
+    }
+
+    .badge {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      display: inline-block;
+    }
+
+    .status-aberto {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .status-fechado {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-andamento {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    /* =========================
+       RESPONSIVO
+    ========================== */
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 1.5rem;
+      }
+
+      .kpi-value {
+        font-size: 1.6rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <!-- =========================
+         CABEÇALHO
+    ========================== -->
+    <header>
+      <h1>SAC TransformAção</h1>
+      <p>Dashboard de Atendimento ao Cliente - Aula de Inteligência Artificial</p>
+      <div class="last-update" id="lastUpdate">
+        Última atualização: --
+      </div>
+    </header>
+
+    <!-- MENSAGENS -->
+    <div id="loadingMessage" class="alert loading">
+      Carregando dados do CSV...
+    </div>
+
+    <div id="errorMessage" class="alert error">
+      Erro ao carregar os dados do CSV.
+    </div>
+
+    <!-- =========================
+         KPIs
+    ========================== -->
+    <section class="kpi-grid">
+
+      <div class="kpi-card">
+        <div class="kpi-title">Total de Atendimentos</div>
+        <div class="kpi-value" id="totalAtendimentos">0</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">Atendimentos Abertos</div>
+        <div class="kpi-value" id="atendimentosAbertos">0</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">Atendimentos Críticos</div>
+        <div class="kpi-value" id="atendimentosCriticos">0</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">Produto com Mais Registros</div>
+        <div class="kpi-value" id="produtoTop">-</div>
+      </div>
+
+    </section>
+
+    <!-- =========================
+         FILTROS
+    ========================== -->
+    <section class="filters">
+
+      <div class="filter-group">
+        <label for="searchInput">Buscar</label>
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Cliente, pedido, produto ou status"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label for="statusFilter">Filtrar por Status</label>
+        <select id="statusFilter">
+          <option value="">Todos</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="priorityFilter">Filtrar por Prioridade</label>
+        <select id="priorityFilter">
+          <option value="">Todas</option>
+        </select>
+      </div>
+
+    </section>
+
+    <!-- =========================
+         GRÁFICO
+    ========================== -->
+    <section class="chart-container">
+      <h2>Produtos com Mais Atendimentos</h2>
+      <canvas id="productChart"></canvas>
+    </section>
+
+    <!-- =========================
+         TABELA
+    ========================== -->
+    <section class="table-container">
+      <h2>Lista de Atendimentos</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Data Abertura</th>
+            <th>Pedido</th>
+            <th>Cliente</th>
+            <th>Produto</th>
+            <th>Categoria</th>
+            <th>Prioridade</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody id="tableBody">
+          <!-- Dados renderizados via JS -->
+        </tbody>
+      </table>
+    </section>
+
+  </div>
+
+  <script>
+    // =========================
+    // CONFIGURAÇÃO
+    // =========================
+
+    const CSV_URL =
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vSSutwCAl88ARBdA6-HC_bR5bRrK6cwu4UxGgqT3s1-5-9TtM8eMK33s3PaxH0AzzQbzWQqonKVMr8H/pub?gid=0&single=true&output=csv";
+
+    let allData = [];
+    let filteredData = [];
+
+    // =========================
+    // ELEMENTOS HTML
+    // =========================
+
+    const loadingMessage = document.getElementById("loadingMessage");
+    const errorMessage = document.getElementById("errorMessage");
+
+    const tableBody = document.getElementById("tableBody");
+
+    const totalAtendimentos = document.getElementById("totalAtendimentos");
+    const atendimentosAbertos = document.getElementById("atendimentosAbertos");
+    const atendimentosCriticos = document.getElementById("atendimentosCriticos");
+    const produtoTop = document.getElementById("produtoTop");
+
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+    const priorityFilter = document.getElementById("priorityFilter");
+
+    const lastUpdate = document.getElementById("lastUpdate");
+
+    const canvas = document.getElementById("productChart");
+    const ctx = canvas.getContext("2d");
+
+    // =========================
+    // FUNÇÃO DE SEGURANÇA
+    // Escapa conteúdo para reduzir risco XSS
+    // =========================
+
+    function escapeHTML(value) {
+      if (value === null || value === undefined) return "";
+
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // =========================
+    // PARSE CSV
+    // =========================
+
+    function parseCSV(text) {
+      const lines = text.trim().split("\n");
+
+      const headers = lines[0]
+        .split(",")
+        .map(h => h.trim());
+
+      return lines.slice(1).map(line => {
+        const values = line.split(",");
+
+        const obj = {};
+
+        headers.forEach((header, index) => {
+          obj[header] = values[index]
+            ? values[index].trim()
+            : "";
+        });
+
+        return obj;
+      });
+    }
+
+    // =========================
+    // CARREGAR DADOS
+    // =========================
+
+    async function loadData() {
+      try {
+        loadingMessage.style.display = "block";
+        errorMessage.style.display = "none";
+
+        const response = await fetch(CSV_URL);
+
+        if (!response.ok) {
+          throw new Error("Erro ao carregar CSV");
+        }
+
+        const csvText = await response.text();
+
+        allData = parseCSV(csvText);
+        filteredData = [...allData];
+
+        updateFilters();
+        applyFilters();
+
+        updateLastUpdate();
+
+      } catch (error) {
+        console.error(error);
+
+        errorMessage.style.display = "block";
+      } finally {
+        loadingMessage.style.display = "none";
+      }
+    }
+
+    // =========================
+    // ATUALIZA DATA
+    // =========================
+
+    function updateLastUpdate() {
+      const now = new Date();
+
+      lastUpdate.textContent =
+        "Última atualização: " +
+        now.toLocaleDateString("pt-BR") +
+        " " +
+        now.toLocaleTimeString("pt-BR");
+    }
+
+    // =========================
+    // FILTROS
+    // =========================
+
+    function updateFilters() {
+      const statuses = [...new Set(
+        allData.map(item => item.Status || "Não informado")
+      )];
+
+      const priorities = [...new Set(
+        allData.map(item => item.Prioridade || "Não informado")
+      )];
+
+      statusFilter.innerHTML =
+        '<option value="">Todos</option>';
+
+      priorityFilter.innerHTML =
+        '<option value="">Todas</option>';
+
+      statuses.forEach(status => {
+        const option = document.createElement("option");
+        option.value = status;
+        option.textContent = status;
+
+        statusFilter.appendChild(option);
+      });
+
+      priorities.forEach(priority => {
+        const option = document.createElement("option");
+        option.value = priority;
+        option.textContent = priority;
+
+        priorityFilter.appendChild(option);
+      });
+    }
+
+    // =========================
+    // APLICAR FILTROS
+    // =========================
+
+    function applyFilters() {
+      const search = searchInput.value.toLowerCase();
+      const status = statusFilter.value;
+      const priority = priorityFilter.value;
+
+      filteredData = allData.filter(item => {
+
+        const cliente = (item.Nome_Cliente || "").toLowerCase();
+        const pedido = (item.Numero_Pedido || "").toLowerCase();
+        const produto = (item.Produto || "").toLowerCase();
+        const statusItem = (item.Status || "").toLowerCase();
+
+        const matchSearch =
+          cliente.includes(search) ||
+          pedido.includes(search) ||
+          produto.includes(search) ||
+          statusItem.includes(search);
+
+        const matchStatus =
+          !status || item.Status === status;
+
+        const matchPriority =
+          !priority || item.Prioridade === priority;
+
+        return matchSearch && matchStatus && matchPriority;
+      });
+
+      renderKPIs();
+      renderTable();
+      renderChart();
+    }
+
+    // =========================
+    // RENDER KPIs
+    // =========================
+
+    function renderKPIs() {
+
+      totalAtendimentos.textContent = filteredData.length;
+
+      const abertos = filteredData.filter(item =>
+        (item.Status || "")
+          .toLowerCase()
+          .includes("aberto")
+      ).length;
+
+      atendimentosAbertos.textContent = abertos;
+
+      const criticos = filteredData.filter(item =>
+        (item.Prioridade || "")
+          .toLowerCase()
+          .includes("crítica") ||
+        (item.Prioridade || "")
+          .toLowerCase()
+          .includes("critica")
+      ).length;
+
+      atendimentosCriticos.textContent = criticos;
+
+      // Produto com mais registros
+      const productCount = {};
+
+      filteredData.forEach(item => {
+        const product =
+          item.Produto || "Não informado";
+
+        productCount[product] =
+          (productCount[product] || 0) + 1;
+      });
+
+      let topProduct = "-";
+      let topValue = 0;
+
+      for (const product in productCount) {
+        if (productCount[product] > topValue) {
+          topValue = productCount[product];
+          topProduct = product;
+        }
+      }
+
+      produtoTop.textContent = topProduct;
+    }
+
+    // =========================
+    // BADGE STATUS
+    // =========================
+
+    function getStatusClass(status) {
+      const s = (status || "").toLowerCase();
+
+      if (s.includes("aberto")) {
+        return "status-aberto";
+      }
+
+      if (s.includes("fechado")) {
+        return "status-fechado";
+      }
+
+      return "status-andamento";
+    }
+
+    // =========================
+    // RENDER TABELA
+    // =========================
+
+    function renderTable() {
+      tableBody.innerHTML = "";
+
+      if (filteredData.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="8">
+              Nenhum registro encontrado.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filteredData.forEach(item => {
+
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+          <td>${escapeHTML(item.ID || "-")}</td>
+          <td>${escapeHTML(item.Data_Abertura || "-")}</td>
+          <td>${escapeHTML(item.Numero_Pedido || "-")}</td>
+          <td>${escapeHTML(item.Nome_Cliente || "-")}</td>
+          <td>${escapeHTML(item.Produto || "-")}</td>
+          <td>${escapeHTML(item.Categoria || "-")}</td>
+          <td>${escapeHTML(item.Prioridade || "-")}</td>
+          <td>
+            <span class="badge ${getStatusClass(item.Status)}">
+              ${escapeHTML(item.Status || "Não informado")}
+            </span>
+          </td>
+        `;
+
+        tableBody.appendChild(row);
+      });
+    }
+
+    // =========================
+    // RENDER GRÁFICO
+    // =========================
+
+    function renderChart() {
+
+      // Limpa canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const counts = {};
+
+      filteredData.forEach(item => {
+        const product =
+          item.Produto || "Não informado";
+
+        counts[product] =
+          (counts[product] || 0) + 1;
+      });
+
+      const labels = Object.keys(counts);
+      const values = Object.values(counts);
+
+      if (labels.length === 0) return;
+
+      const chartWidth = canvas.width = canvas.offsetWidth;
+      const chartHeight = canvas.height = 400;
+
+      const maxValue = Math.max(...values);
+
+      const barWidth = chartWidth / labels.length - 20;
+
+      labels.forEach((label, index) => {
+
+        const value = values[index];
+
+        const barHeight =
+          (value / maxValue) * 250;
+
+        const x =
+          index * (barWidth + 20) + 30;
+
+        const y =
+          chartHeight - barHeight - 60;
+
+        // Barra
+        ctx.fillStyle = "#2563eb";
+        ctx.fillRect(
+          x,
+          y,
+          barWidth,
+          barHeight
+        );
+
+        // Valor
+        ctx.fillStyle = "#111827";
+        ctx.font = "bold 14px Arial";
+        ctx.fillText(
+          value,
+          x + barWidth / 2 - 5,
+          y - 10
+        );
+
+        // Nome produto
+        ctx.save();
+
+        ctx.translate(
+          x + barWidth / 2,
+          chartHeight - 40
+        );
+
+        ctx.rotate(-0.5);
+
+        ctx.fillStyle = "#334155";
+        ctx.font = "12px Arial";
+
+        ctx.fillText(label, 0, 0);
+
+        ctx.restore();
+      });
+    }
+
+    // =========================
+    // EVENTOS
+    // =========================
+
+    searchInput.addEventListener("input", applyFilters);
+
+    statusFilter.addEventListener("change", applyFilters);
+
+    priorityFilter.addEventListener("change", applyFilters);
+
+    // =========================
+    // AUTO UPDATE
+    // Atualiza a cada 90 segundos
+    // =========================
+
+    setInterval(() => {
+      loadData();
+    }, 90000);
+
+    // =========================
+    // INICIALIZAÇÃO
+    // =========================
+
+    loadData();
+  </script>
+
+</body>
+</html>
